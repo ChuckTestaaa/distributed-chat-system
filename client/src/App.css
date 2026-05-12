@@ -1682,3 +1682,17 @@ body {
   animation: pulse 1s infinite;
 }
 
+
+
+.message-form button.btn-pulse {
+  background: none !important;
+  padding: 8px !important;
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.message-form button.btn-pulse:hover {
+  background: var(--bg-hover) !important;
+}
+

@@ -515,20 +515,23 @@ export default function ChatRoom() {
           <button 
             type="button" 
             onClick={() => setIsSecretMode(!isSecretMode)}
+            className="btn-pulse"
             style={{ 
               background: 'none', 
               border: 'none', 
               padding: '8px', 
               cursor: 'pointer',
-              color: isSecretMode ? 'var(--error)' : 'var(--text-secondary)',
+              color: isSecretMode ? '#ef4444' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              marginRight: '8px',
+              minWidth: '40px'
             }}
             title="Toggle Pulse Mode (Burn-After-Reading)"
           >
-            <Flame size={20} fill={isSecretMode ? 'var(--error)' : 'none'} />
+            <Flame size={20} fill={isSecretMode ? '#ef4444' : 'none'} />
           </button>
           <input
             type="text"
