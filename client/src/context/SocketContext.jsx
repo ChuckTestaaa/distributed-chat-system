@@ -75,10 +75,10 @@ export function SocketProvider({ children }) {
             } catch { /* ignore malformed frames */ }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (e) => {
             setIsConnected(false);
             wsRef.current = null;
-            console.log('WebSocket disconnected');
+            console.log('WebSocket disconnected. Code:', e.code, 'Reason:', e.reason);
 
             // Exponential backoff reconnect
             if (reconnectAttempt.current < maxReconnectAttempts) {

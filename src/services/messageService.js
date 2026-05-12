@@ -1,4 +1,4 @@
-﻿import { query } from '../config/database.js';
+import { query } from '../config/database.js';
 import { v4 as uuid } from 'uuid';
 
 export const createMessage = async ({ roomId, senderId, content, type = 'TEXT' }) => {
@@ -140,5 +140,5 @@ export const isRoomMember = async (roomId, userId) => {
 
 
 export async function deleteMessage(messageId) {
-    await query('DELETE FROM messages WHERE id = ', [messageId]);
+    await query('DELETE FROM messages WHERE id = $1', [messageId]);
 }
