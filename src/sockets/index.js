@@ -1,6 +1,6 @@
 import { WsServer } from '../lib/ws.js';
 import { initPubSub, publish, subscribe, queueForOfflineUser, getPendingMessages } from '../lib/redisPubSub.js';
-import { createMessage, isRoomMember, getMessagesByIds, addReaction } from '../services/messageService.js';
+import { createMessage, isRoomMember, getMessagesByIds, addReaction, deleteMessage } from '../services/messageService.js';
 import { query } from '../config/database.js';
 
 import crypto from 'crypto';
@@ -172,6 +172,42 @@ export async function initializeSocket(httpServer, pubClient, subClient) {
             });
         } catch (error) {
             console.error('Error adding reaction:', error);
+        }
+    });
+
+    wsServer.on('reveal_secret', async (ws, { roomId, messageId }) => {
+        try {
+            const isMember = await isRoomMember(roomId, ws.userId);
+            if (!isMember) return;
+
+            const payload = { roomId, messageId };
+            
+            // 1. Tell everyone to start their local UI timer
+            wsServer.broadcastRoom(roomId, 'secret_revealed', payload);
+            await publish(`room:${roomId}`, { 
+                event: 'secret_revealed', 
+                data: payload, 
+                instanceId: INSTANCE_ID 
+            });
+
+            // 2. Wait 10 seconds, then burn it
+            setTimeout(async () => {
+                try {
+                    await deleteMessage(messageId);
+                    
+                    const burnPayload = { roomId, messageId };
+                    wsServer.broadcastRoom(roomId, 'message_burned', burnPayload);
+                    await publish(`room:${roomId}`, { 
+                        event: 'message_burned', 
+                        data: burnPayload, 
+                        instanceId: INSTANCE_ID 
+                    });
+                } catch (err) {
+                    console.error('Error burning secret:', err);
+                }
+            }, 10000);
+        } catch (error) {
+            console.error('Error revealing secret:', error);
         }
     });
 

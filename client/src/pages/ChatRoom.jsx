@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Video, Users, ChevronLeft, Send, X, UserPlus, PlusCircle, MoreVertical, Smile } from 'lucide-react';
+import { Video, Users, ChevronLeft, Send, X, UserPlus, PlusCircle, MoreVertical, Smile, Flame } from 'lucide-react';
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../hooks/useSocket";
@@ -23,10 +23,15 @@ export default function ChatRoom() {
     isConnected,
     addReaction,
     onReactionUpdate,
+    revealSecret,
+    onSecretRevealed,
+    onMessageBurned,
   } = useSocket();
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [isSecretMode, setIsSecretMode] = useState(false);
+  const [revealingMessages, setRevealingMessages] = useState({}); // { messageId: countdown }
   const [loading, setLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState([]);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -44,6 +49,38 @@ export default function ChatRoom() {
         ));
     });
   }, [onReactionUpdate]);
+
+  useEffect(() => {
+    const unsubRevealed = onSecretRevealed(({ messageId }) => {
+      setRevealingMessages(prev => ({ ...prev, [messageId]: 10 }));
+      
+      const interval = setInterval(() => {
+        setRevealingMessages(prev => {
+          if (prev[messageId] <= 1) {
+            clearInterval(interval);
+            const next = { ...prev };
+            delete next[messageId];
+            return next;
+          }
+          return { ...prev, [messageId]: prev[messageId] - 1 };
+        });
+      }, 1000);
+    });
+
+    const unsubBurned = onMessageBurned(({ messageId }) => {
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      setRevealingMessages(prev => {
+        const next = { ...prev };
+        delete next[messageId];
+        return next;
+      });
+    });
+
+    return () => {
+      unsubRevealed();
+      unsubBurned();
+    };
+  }, [onSecretRevealed, onMessageBurned]);
   const [callState, setCallState] = useState({
     active: false,
     isInitiator: false,
@@ -177,8 +214,9 @@ export default function ChatRoom() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    sendMessage(roomId, input.trim());
+    sendMessage(roomId, input.trim(), isSecretMode ? 'SECRET' : 'TEXT');
     setInput("");
+    setIsSecretMode(false);
     sendTyping(roomId, false);
   };
 
@@ -363,8 +401,25 @@ export default function ChatRoom() {
                             </span>
                           </div>
                         )}
-                        <div className="message-content">
-                          {msg.content}
+                        <div className={`message-content ${msg.type === 'SECRET' && !revealingMessages[msg.id] ? 'secret-blurred' : ''}`}>
+                          {msg.type === 'SECRET' && !revealingMessages[msg.id] ? (
+                            <div 
+                              onClick={() => revealSecret(roomId, msg.id)} 
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontStyle: 'italic', opacity: 0.8 }}
+                            >
+                              <PlusCircle size={14} /> Click to reveal Pulse message
+                            </div>
+                          ) : (
+                            <>
+                              {msg.content}
+                              {revealingMessages[msg.id] && (
+                                <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <div className="burn-timer-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--error)', animation: 'pulse 1s infinite' }} />
+                                  Burning in {revealingMessages[msg.id]}s...
+                                </div>
+                              )}
+                            </>
+                          )}
                           
                           <button 
                               className="reaction-trigger"
@@ -457,6 +512,24 @@ export default function ChatRoom() {
         )}
 
         <form onSubmit={handleSend} className="message-form">
+          <button 
+            type="button" 
+            onClick={() => setIsSecretMode(!isSecretMode)}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              padding: '8px', 
+              cursor: 'pointer',
+              color: isSecretMode ? 'var(--error)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+            title="Toggle Pulse Mode (Burn-After-Reading)"
+          >
+            <Flame size={20} fill={isSecretMode ? 'var(--error)' : 'none'} />
+          </button>
           <input
             type="text"
             value={input}

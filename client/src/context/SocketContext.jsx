@@ -108,7 +108,7 @@ export function SocketProvider({ children }) {
 
     const joinRoom = useCallback((roomId) => emit('join_room', roomId), [emit]);
     const leaveRoom = useCallback((roomId) => emit('leave_room', roomId), [emit]);
-    const sendMessage = useCallback((roomId, content) => emit('send_message', { roomId, content }), [emit]);
+    const sendMessage = useCallback((roomId, content, type = 'TEXT') => emit('send_message', { roomId, content, type }), [emit]);
     const sendTyping = useCallback((roomId, isTyping) => emit('typing', { roomId, isTyping }), [emit]);
 
     const onNewMessage = useCallback((callback) => {
@@ -128,6 +128,10 @@ export function SocketProvider({ children }) {
     const addReaction = useCallback((roomId, messageId, emoji) => emit('add_reaction', { roomId, messageId, emoji }), [emit]);
     const onReactionUpdate = useCallback((callback) => addListener('message_reaction_updated', callback), [addListener]);
 
+    const revealSecret = useCallback((roomId, messageId) => emit('reveal_secret', { roomId, messageId }), [emit]);
+    const onSecretRevealed = useCallback((callback) => addListener('secret_revealed', callback), [addListener]);
+    const onMessageBurned = useCallback((callback) => addListener('message_burned', callback), [addListener]);
+
     const value = {
         isConnected,
         onlineUsers,
@@ -143,6 +147,9 @@ export function SocketProvider({ children }) {
         endCall,
         addReaction,
         onReactionUpdate,
+        revealSecret,
+        onSecretRevealed,
+        onMessageBurned,
     };
 
     return (

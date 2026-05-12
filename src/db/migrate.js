@@ -61,13 +61,15 @@ async function migrate() {
             const sql = fs.readFileSync(path.join(dir, file), 'utf-8');
             console.log(`  apply ${file} ...`);
 
+            const useTransaction = !sql.includes('ALTER TYPE') || !sql.includes('ADD VALUE');
+
             try {
-                await client.query('BEGIN');
+                if (useTransaction) await client.query('BEGIN');
                 await client.query(sql);
                 await client.query(`INSERT INTO _migrations (name) VALUES ($1)`, [file]);
-                await client.query('COMMIT');
+                if (useTransaction) await client.query('COMMIT');
             } catch (err) {
-                await client.query('ROLLBACK');
+                if (useTransaction) await client.query('ROLLBACK');
                 console.error(`  FAILED: ${err.message}`);
                 process.exit(1);
             }
