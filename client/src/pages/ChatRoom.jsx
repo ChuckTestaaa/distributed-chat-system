@@ -464,7 +464,7 @@ export default function ChatRoom() {
             placeholder="Type a message..."
             disabled={!isConnected}
           />
-          <button type="submit" disabled={!isConnected || !input.trim()} className="btn-primary" style={{ padding: '10px 20px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button type="submit" disabled={!isConnected || !input.trim()} className="btn-primary" style={{ width: 'auto', padding: '10px 20px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Send size={18} />
           </button>
         </form>
