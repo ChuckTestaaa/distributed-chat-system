@@ -52,15 +52,17 @@ export default function ChatRoom() {
 
   useEffect(() => {
     const unsubRevealed = onSecretRevealed(({ messageId }) => {
+      console.log('Secret revealed event received for:', messageId);
       setRevealingMessages(prev => ({ ...prev, [messageId]: 10 }));
       
       const interval = setInterval(() => {
         setRevealingMessages(prev => {
-          if (prev[messageId] <= 1) {
+          if (prev[messageId] === undefined) {
             clearInterval(interval);
-            const next = { ...prev };
-            delete next[messageId];
-            return next;
+            return prev;
+          }
+          if (prev[messageId] <= 0) {
+            return { ...prev, [messageId]: 0 };
           }
           return { ...prev, [messageId]: prev[messageId] - 1 };
         });
@@ -68,6 +70,7 @@ export default function ChatRoom() {
     });
 
     const unsubBurned = onMessageBurned(({ messageId }) => {
+      console.log('Message burned event received for:', messageId);
       setMessages(prev => prev.filter(m => m.id !== messageId));
       setRevealingMessages(prev => {
         const next = { ...prev };

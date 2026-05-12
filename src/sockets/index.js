@@ -7,6 +7,7 @@ import crypto from 'crypto';
 
 const wsServer = new WsServer();
 const INSTANCE_ID = crypto.randomUUID();
+const activeReveals = new Set();
 
 /**
  * Initialise WebSocket server on the raw http.Server.
@@ -177,8 +178,13 @@ export async function initializeSocket(httpServer, pubClient, subClient) {
 
     wsServer.on('reveal_secret', async (ws, { roomId, messageId }) => {
         try {
+            if (activeReveals.has(messageId)) return;
+            
             const isMember = await isRoomMember(roomId, ws.userId);
             if (!isMember) return;
+
+            activeReveals.add(messageId);
+            console.log(`[PULSE] Starting 10s burn timer for message ${messageId} in room ${roomId}`);
 
             const payload = { roomId, messageId };
             
@@ -194,6 +200,8 @@ export async function initializeSocket(httpServer, pubClient, subClient) {
             setTimeout(async () => {
                 try {
                     await deleteMessage(messageId);
+                    activeReveals.delete(messageId);
+                    console.log(`[PULSE] Message ${messageId} burned successfully`);
                     
                     const burnPayload = { roomId, messageId };
                     wsServer.broadcastRoom(roomId, 'message_burned', burnPayload);
@@ -203,6 +211,7 @@ export async function initializeSocket(httpServer, pubClient, subClient) {
                         instanceId: INSTANCE_ID 
                     });
                 } catch (err) {
+                    activeReveals.delete(messageId);
                     console.error('Error burning secret:', err);
                 }
             }, 10000);
