@@ -1,4 +1,4 @@
-﻿/* ========================================
+/* ========================================
    CSS Variables & Reset
    ======================================== */
 :root {
@@ -173,6 +173,7 @@ body {
 .app-shell {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
   background: var(--bg-dark);
@@ -186,11 +187,13 @@ body {
   background: var(--bg-card);
   border-right: 1px solid var(--border);
   height: 100vh;
+  height: 100dvh;
 }
 
 .main-content {
   flex: 1;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg-dark);
@@ -821,6 +824,7 @@ body {
 
 .loading-screen {
   height: 100vh;
+  height: 100dvh;
   font-size: 18px;
 }
 
