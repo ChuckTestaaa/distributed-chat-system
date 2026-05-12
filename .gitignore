@@ -1,0 +1,7 @@
+node_modules
+client/node_modules
+client/dist
+.env
+aws-key.pem
+.DS_Store
+*.log
