@@ -60,6 +60,16 @@ export default function ChatRoom() {
     document.body.setAttribute('data-theme', savedTheme);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (activeReactionId && !e.target.closest('.reaction-picker') && !e.target.closest('.message')) {
+        setActiveReactionId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeReactionId]);
+
   // Load initial messages and join room
   useEffect(() => {
     const init = async () => {
