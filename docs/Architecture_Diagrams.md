@@ -374,6 +374,42 @@ sequenceDiagram
 
 ---
 
+## Diagram 10 — Pulse (Burn-After-Reading) Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant A as User A (Sender)
+    participant S1 as Server 1
+    participant PG as PostgreSQL
+    participant RD as Redis
+    participant S2 as Server 2
+    participant B as User B (Recipient)
+
+    Note over A,B: 1. Secret message is born
+    A->>S1: send_message {type: 'SECRET', content: 'Hello'}
+    S1->>PG: INSERT message (type=SECRET)
+    S1->>RD: PUBLISH room:123 {new_message}
+    RD->>S2: Deliver signal
+    S1->>A: new_message (blurred in UI)
+    S2->>B: new_message (blurred in UI)
+
+    Note over A,B: 2. Message revelation triggered
+    B->>S2: reveal_secret {messageId}
+    S2->>RD: PUBLISH room:123 {secret_revealed}
+    RD->>S1: Deliver signal
+    S1->>A: secret_revealed (start 10s UI timer)
+    S2->>B: secret_revealed (start 10s UI timer)
+
+    Note over S2: 3. Distributed destruction (after 10s)
+    S2->>PG: DELETE FROM messages WHERE id = messageId
+    S2->>RD: PUBLISH room:123 {message_burned}
+    RD->>S1: Deliver signal
+    S1->>A: message_burned (wipe from UI)
+    S2->>B: message_burned (wipe from UI)
+```
+
+---
+
 ## How to Export Diagrams
 
 1. Go to **https://mermaid.live**

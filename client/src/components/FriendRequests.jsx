@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { friendsApi } from '../services/api';
 import { useSocket } from '../hooks/useSocket';
 import Avatar from './Avatar';
+import { UserCheck, Check, X } from 'lucide-react';
 
 export default function FriendRequests() {
     const [requests, setRequests] = useState([]);
