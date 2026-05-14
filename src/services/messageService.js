@@ -13,6 +13,12 @@ export const createMessage = async ({ roomId, senderId, content, type = 'TEXT' }
 
     const msg = result.rows[0];
 
+    // Update last_message_at in rooms table for sorting
+    await query(
+        `UPDATE rooms SET last_message_at = $1 WHERE id = $2`,
+        [msg.createdAt, roomId]
+    );
+
     // Fetch sender info
     const senderResult = await query(
         `SELECT id, username, avatar_url AS "avatarUrl" FROM users WHERE id = $1`,

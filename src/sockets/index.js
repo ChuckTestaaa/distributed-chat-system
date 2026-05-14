@@ -131,19 +131,27 @@ export async function initializeSocket(httpServer, pubClient, subClient) {
                 type,
             });
 
-            // Broadcast to local sockets in this room
+            // 1. Broadcast to local sockets who have JOINED this specific room
             wsServer.broadcastRoom(roomId, 'new_message', message);
 
-            // Publish to Redis so other server instances deliver it too
+            // 2. Publish to Redis so other server instances deliver 'new_message' to joined sockets
             await publish(`room:${roomId}`, { event: 'new_message', data: message, instanceId: INSTANCE_ID });
 
-            // Queue for offline room members
-            const membersResult = await query(
-                `SELECT user_id FROM room_members WHERE room_id = $1 AND user_id != $2`,
-                [roomId, ws.userId],
+            // 3. Notify ALL members of the room (for Sidebar/RoomList sorting) regardless of which room they are in
+            const allMembers = await query(
+                `SELECT user_id FROM room_members WHERE room_id = $1`,
+                [roomId]
             );
-            for (const row of membersResult.rows) {
-                if (!wsServer.isUserOnline(row.user_id)) {
+            
+            for (const row of allMembers.rows) {
+                // This sends a targeted event to the user across the whole cluster
+                await sendToUserCrossInstance(row.user_id, 'room_activity', {
+                    roomId,
+                    lastMessage: message
+                });
+
+                // 4. Queue for offline members
+                if (row.user_id !== ws.userId && !wsServer.isUserOnline(row.user_id)) {
                     await queueForOfflineUser(row.user_id, message.id);
                 }
             }

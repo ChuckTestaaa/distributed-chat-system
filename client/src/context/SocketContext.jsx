@@ -132,6 +132,8 @@ export function SocketProvider({ children }) {
     const onSecretRevealed = useCallback((callback) => addListener('secret_revealed', callback), [addListener]);
     const onMessageBurned = useCallback((callback) => addListener('message_burned', callback), [addListener]);
 
+    const onRoomActivity = useCallback((callback) => addListener('room_activity', callback), [addListener]);
+
     const value = {
         isConnected,
         onlineUsers,
@@ -150,6 +152,7 @@ export function SocketProvider({ children }) {
         revealSecret,
         onSecretRevealed,
         onMessageBurned,
+        onRoomActivity,
     };
 
     return (

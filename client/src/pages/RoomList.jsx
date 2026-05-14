@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 import { roomsApi } from '../services/api';
 import FriendsList from '../components/FriendsList';
 import FriendRequests from '../components/FriendRequests';
 import Avatar from '../components/Avatar';
 import ProfileModal from '../components/ProfileModal';
-import { Settings, LogOut, MessageSquare, Users, PlusCircle, Loader2, Sun, Moon } from 'lucide-react';
+import { Settings, LogOut, MessageSquare, Users, PlusCircle, Loader2, Sun, Moon, Search } from 'lucide-react';
 
 export default function RoomList() {
     const [rooms, setRooms] = useState([]);
@@ -15,9 +16,19 @@ export default function RoomList() {
     const [showFriends, setShowFriends] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [newRoomName, setNewRoomName] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const { user, logout } = useAuth();
+    const { onRoomActivity } = useSocket();
     const navigate = useNavigate();
+
+    // Filter rooms based on search term
+    const filteredRooms = rooms.filter(room => {
+        const displayName = room.type === 'PRIVATE'
+            ? (room.members?.find(m => m.id !== user?.id)?.username || room.name)
+            : room.name;
+        return displayName.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     useEffect(() => {
         document.body.setAttribute('data-theme', theme);
@@ -42,6 +53,30 @@ export default function RoomList() {
             setLoading(false);
         }
     };
+
+    // Listen for real-time room activity (new messages)
+    useEffect(() => {
+        return onRoomActivity((data) => {
+            setRooms(prev => {
+                const index = prev.findIndex(r => r.id === data.roomId);
+                if (index === -1) {
+                    // Room not in list (might be a new DM or group)
+                    loadRooms();
+                    return prev;
+                }
+                
+                const updatedRoom = { 
+                    ...prev[index], 
+                    lastMessage: data.lastMessage,
+                    lastMessageAt: data.lastMessage.createdAt
+                };
+                
+                const newRooms = [...prev];
+                newRooms.splice(index, 1); // Remove from current position
+                return [updatedRoom, ...newRooms]; // Add to top
+            });
+        });
+    }, [onRoomActivity]);
 
     const handleCreateRoom = async (e) => {
         e.preventDefault();
@@ -101,6 +136,25 @@ export default function RoomList() {
                     </div>
                 ) : (
                     <div className="conversations-panel" style={{ padding: '12px' }}>
+                        <div className="search-bar" style={{ position: 'relative', marginBottom: '16px' }}>
+                            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', opacity: 0.7 }} />
+                            <input
+                                type="text"
+                                placeholder="Search conversations..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px 10px 36px',
+                                    borderRadius: '10px',
+                                    border: '1px solid var(--border)',
+                                    background: 'var(--bg-input)',
+                                    fontSize: '14px',
+                                    transition: 'border-color 0.2s'
+                                }}
+                            />
+                        </div>
+
                         <button
                             className="create-room-btn"
                             onClick={() => setShowCreate(!showCreate)}
@@ -146,8 +200,8 @@ export default function RoomList() {
                                 <p style={{ fontSize: '14px', margin: 0 }}>Create a room or find friends to start chatting!</p>
                             </div>
                         ) : (
-                            <div className="rooms-list-scroll">
-                                {rooms.map(room => {
+                                <div className="rooms-list-scroll">
+                                    {filteredRooms.map(room => {
                                     const displayName = room.type === 'PRIVATE'
                                         ? (room.members?.find(m => m.id !== user?.id)?.username || room.name)
                                         : room.name;

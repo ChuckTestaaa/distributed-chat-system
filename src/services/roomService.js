@@ -35,11 +35,11 @@ export const createRoom = async ({ name, type, createdById, memberIds }) => {
 
 export const getUserRooms = async (userId) => {
     const roomsResult = await query(
-        `SELECT r.id, r.name, r.type, r.created_at AS "createdAt"
+        `SELECT r.id, r.name, r.type, r.created_at AS "createdAt", r.last_message_at AS "lastMessageAt"
          FROM rooms r
          JOIN room_members rm ON rm.room_id = r.id
          WHERE rm.user_id = $1
-         ORDER BY r.updated_at DESC`,
+         ORDER BY r.last_message_at DESC`,
         [userId],
     );
 
