@@ -149,6 +149,7 @@ export default function RoomList() {
                                     borderRadius: '10px',
                                     border: '1px solid var(--border)',
                                     background: 'var(--bg-input)',
+                                    color: 'var(--text-primary)',
                                     fontSize: '14px',
                                     transition: 'border-color 0.2s'
                                 }}
