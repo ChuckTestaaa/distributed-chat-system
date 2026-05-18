@@ -2,7 +2,9 @@ import pg from 'pg';
 
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false }
+    ssl: (process.env.DATABASE_URL?.includes('localhost') || process.env.DATABASE_URL?.includes('postgres:5432')) 
+        ? false 
+        : { rejectUnauthorized: false }
 });
 
 pool.on('error', (err) => {
