@@ -7,9 +7,9 @@ services:
     container_name: chat_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: chat_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-chat_db}
     ports:
       - "5433:5432"
     volumes:
@@ -32,11 +32,11 @@ services:
   server1:
     build: .
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chat_db?schema=public&sslmode=disable
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-super-secret-jwt-key
-      - PORT=3000
-      - CORS_ORIGIN=https://kearl.me,https://www.kearl.me
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/chat_db?schema=public&sslmode=disable}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - PORT=${PORT:-3000}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://kearl.me,https://www.kearl.me}
     depends_on:
       redis:
         condition: service_healthy
@@ -49,11 +49,11 @@ services:
   server2:
     build: .
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/chat_db?schema=public&sslmode=disable
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=your-super-secret-jwt-key
-      - PORT=3000
-      - CORS_ORIGIN=https://kearl.me,https://www.kearl.me
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/chat_db?schema=public&sslmode=disable}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - PORT=${PORT:-3000}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://kearl.me,https://www.kearl.me}
     depends_on:
       redis:
         condition: service_healthy
